@@ -1,1 +1,1 @@
-# classyneurons
+# ClassyNeurons
