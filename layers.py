@@ -1,68 +1,85 @@
 import numpy as np
-from layers import Dense
-from layers import Sigmoid
-from models import Sequential
-from initializers import saved_weights
-from metrics import MeanSquaredError
-import matplotlib.pyplot as plt
 
-kernel_weights = np.array([[0, 0],
-                           [0, 0]])
-bias_weights = np.array([0, 0])
+class Dense:
+    def __init__(self, output_dim:int, input_dim:int, kernel_initializer=None, bias_initializer=None, alpha=1.0):
+        self.input_dim = input_dim
+        self.output_dim = output_dim
+        self.weights = np.zeros((input_dim+1, output_dim))
+        self.initialize(kernel_initializer, bias_initializer)
+        self.alpha = alpha
+        self.Z = np.array([])
+        self.neurons = np.array([])
+        self.sigma = np.array([])
+        self.delta = np.array([])
 
-saved_kernel = saved_weights(kernel_weights)
-saved_bias = saved_weights(bias_weights)
+    def initialize(self, kernel_initializer=None, bias_initializer=None):
+        if kernel_initializer is not None:
+            self.weights[1:, :] = np.asmatrix(kernel_initializer(self.input_dim, self.output_dim))
+        if bias_initializer is not None:
+            self.weights[0, :] = np.asmatrix(bias_initializer(1, self.output_dim))
 
-model = Sequential()
-model.add(Dense(2, 2, kernel_initializer=saved_kernel, bias_initializer=saved_bias, alpha=2.5))
-model.add(Sigmoid())
+    def predict(self, X, bias_included=False):
+        X_matrix = np.asmatrix(X)
+        if bias_included:
+            self.Z = X_matrix
+        else:
+            self.Z = np.ones((X_matrix.shape[0], X_matrix.shape[1]+1))
+            self.Z[:, 1:] = X_matrix
 
-X = np.array([[0, 0],
-              [0, 1],
-              [1, 0],
-              [1, 1]])
-y = np.array([[0, 1],
-              [1, 0],
-              [1, 0],
-              [1, 0]])
+        self.neurons = self.Z @ self.weights
+        return self.neurons
 
-print("Prediction")
-p = model.predict(X)
-print(p)
-print("Error")
-print(p-y)
+    def backprop(self, sigma):
+        self.sigma = np.asmatrix(sigma) @ self.weights.transpose()
+        self.sigma = self.sigma[:, 1:]
+        return self.sigma
 
-# [[ 6.27995387e-03 -6.27995387e-03]
-#  [-4.83799975e-05  4.83799975e-05]
-#  [-4.83799971e-05  4.83799971e-05]
-#  [-1.47932777e-11  1.47933355e-11]]
+    def weight_gradient(self, sigma):
+        self.delta = self.Z.transpose() @ sigma
+        return self.delta
 
-loss_function = MeanSquaredError()
+    def update(self):
+        self.weights = self.weights - (1.0/self.Z.shape[0]) * self.alpha * self.delta
 
-print("Training")
-loss_history = model.fit(X, y, epochs=100, batch_size=2, steps_per_epoch=1000, halt=False, loss=loss_function)
-print("Prediction")
-p = model.predict(X)
-print(p)
-print("Error")
-print(p-y)
 
-# [[ 1.66552781e-04 -1.66552781e-04]
-#  [-6.66199208e-05  6.66199208e-05]
-#  [-6.66202493e-05  6.66202493e-05]
-#  [-7.39408534e-13  7.39422160e-13]]
+class Activation:
+    def __init__(self, activate=None, derivative=None):
+        self.Z = np.array([])
+        self.neurons = np.array([])
+        self.sigma = np.array([])
 
-print("Weights")
-print(model.layers[0].weights)
+        if activate is None:
+            self.activate = lambda x : x
+        else:
+            self.activate = activate
 
-# [[ -8.70003173   8.70003173]
-#  [ 18.31646709 -18.31646709]
-#  [ 18.31647202 -18.31647202]]
+        if derivative is None:
+            self.derivative = lambda x : 1
+        else:
+            self.derivative = derivative
 
-plt.plot(np.arange(0, 100), loss_history[:, 0])
-plt.plot(np.arange(0, 100), loss_history[:, 1])
-plt.xlabel("Epoch")
-plt.ylabel("Loss")
-plt.show()
+    def predict(self, X):
+        self.Z = np.asmatrix(X)
+        self.neurons = self.activate(X)
+        return self.neurons
 
-# TODO: test with hidden layer
+    def compute_gradient(self):
+        self.sigma = self.derivative(self.Z)
+        return self.sigma
+
+    def backprop(self, sigma):
+        return np.multiply(sigma, self.compute_gradient())
+
+
+class Sigmoid(Activation):
+    def __init__(self):
+        activate = lambda x : 1.0 / (1.0 + np.exp(-x))
+        derivative = lambda x : np.multiply(activate(x), (1.0-activate(x)))
+        super().__init__(activate=activate, derivative=derivative)
+
+
+class ReLU(Activation):
+    def __init__(self):
+        activate = lambda x : x * (x > 0)
+        derivative = lambda x : (x > 0) * 1
+        super().__init__(activate=activate, derivative=derivative)
