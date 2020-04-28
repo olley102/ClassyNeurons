@@ -14,7 +14,7 @@ saved_kernel = saved_weights(kernel_weights)
 saved_bias = saved_weights(bias_weights)
 
 model = Sequential()
-model.add(Dense(2, 2, kernel_initializer=saved_kernel, bias_initializer=saved_bias, alpha=2.5))
+model.add(Dense(2, 2, kernel_initializer=saved_kernel, bias_initializer=saved_bias, alpha=2.0))
 model.add(Sigmoid())
 
 X = np.array([[0, 0],
@@ -49,3 +49,5 @@ plt.plot(np.arange(0, 100), loss_history[:, 1])
 plt.xlabel("Epoch")
 plt.ylabel("Loss")
 plt.show()
+
+# TODO: test with hidden layer
