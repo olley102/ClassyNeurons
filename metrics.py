@@ -9,13 +9,13 @@ class Loss:
             else:
                 # Symmetric derivative
                 if centering == 0:
-                    self.derivative = lambda p : (loss(p+0.5*dp) - loss(p-0.5*dp)) / dp
+                    self.derivative = lambda p, y, x : (loss(p+0.5*dp, y, x) - loss(p-0.5*dp, y, x)) / dp
                 # Right derivative
                 elif centering == 1:
-                    self.derivative = lambda p : (loss(p+dp) - loss(p)) / dp
+                    self.derivative = lambda p, y, x : (loss(p+dp, y, x) - loss(p, y, x)) / dp
                 # Left derivative
                 elif centering == -1:
-                    self.derivative = lambda p : (loss(p) - loss(p-dp)) / dp
+                    self.derivative = lambda p, y, x : (loss(p, y, x) - loss(p-dp, y, x)) / dp
                 else:
                     raise ValueError("Centering value is invalid. Must be integer of 0, 1 or -1.")
         else:
