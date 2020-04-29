@@ -7,8 +7,8 @@ class Dense:
         self.weights = np.zeros((input_dim+1, output_dim))
         self.initialize(kernel_initializer, bias_initializer)
         self.alpha = alpha
+        self.X = np.array([])
         self.Z = np.array([])
-        self.neurons = np.array([])
         self.sigma = np.array([])
         self.delta = np.array([])
 
@@ -21,13 +21,13 @@ class Dense:
     def predict(self, X, bias_included=False):
         X_matrix = np.asmatrix(X)
         if bias_included:
-            self.Z = X_matrix
+            self.X = X_matrix
         else:
-            self.Z = np.ones((X_matrix.shape[0], X_matrix.shape[1]+1))
-            self.Z[:, 1:] = X_matrix
+            self.X = np.ones((X_matrix.shape[0], X_matrix.shape[1] + 1))
+            self.X[:, 1:] = X_matrix
 
-        self.neurons = self.Z @ self.weights
-        return self.neurons
+        self.Z = self.X @ self.weights
+        return self.Z
 
     def backprop(self, sigma):
         self.sigma = np.asmatrix(sigma) @ self.weights.transpose()
@@ -35,17 +35,17 @@ class Dense:
         return self.sigma
 
     def weight_gradient(self, sigma):
-        self.delta = self.Z.transpose() @ sigma
+        self.delta = self.X.transpose() @ sigma
         return self.delta
 
     def update(self):
-        self.weights = self.weights - (1.0/self.Z.shape[0]) * self.alpha * self.delta
+        self.weights = self.weights - (1.0 / self.X.shape[0]) * self.alpha * self.delta
 
 
 class Activation:
     def __init__(self, activate=None, derivative=None):
+        self.X = np.array([])
         self.Z = np.array([])
-        self.neurons = np.array([])
         self.sigma = np.array([])
 
         if activate is None:
@@ -59,12 +59,12 @@ class Activation:
             self.derivative = derivative
 
     def predict(self, X):
-        self.Z = np.asmatrix(X)
-        self.neurons = self.activate(X)
-        return self.neurons
+        self.X = np.asmatrix(X)
+        self.Z = self.activate(X)
+        return self.Z
 
     def compute_gradient(self):
-        self.sigma = self.derivative(self.Z)
+        self.sigma = self.derivative(self.X)
         return self.sigma
 
     def backprop(self, sigma):
