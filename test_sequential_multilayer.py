@@ -21,9 +21,9 @@ saved_bias_1 = saved_weights(bias_weights_1)
 saved_kernel_1 = saved_weights(kernel_weights_1)
 
 model = Sequential()
-model.add(Dense(2, 2, kernel_initializer=saved_kernel_0, bias_initializer=saved_bias_0, alpha=5.0))
+model.add(Dense(2, 2, kernel_initializer=saved_kernel_0, bias_initializer=saved_bias_0, alpha=1.25))
 model.add(Sigmoid())
-model.add(Dense(1, 2, kernel_initializer=saved_kernel_1, bias_initializer=saved_bias_1, alpha=5.0))
+model.add(Dense(1, 2, kernel_initializer=saved_kernel_1, bias_initializer=saved_bias_1, alpha=1.25))
 model.add(Sigmoid())
 
 X = np.array([[0, 0],
