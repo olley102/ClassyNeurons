@@ -19,26 +19,26 @@ class Loss:
                 else:
                     raise ValueError("Centering value is invalid. Must be integer of 0, 1 or -1.")
         else:
-            self.loss = lambda p, y : (1/(2*y.shape[0])) * ((p-y).transpose() @ (p-y)).diagonal()
-            self.derivative = lambda p, y : (1/y.shape[0]) * (np.ones((1, y.shape[0])) @ (p-y)).transpose()
+            self.loss = lambda p, y, x : (1/(2*y.shape[0])) * ((p-y).transpose() @ (p-y)).diagonal()
+            self.derivative = lambda p, y, x : (1/y.shape[0]) * (x.transpose() @ (p-y)).sum(0)
 
-    def evaluate(self, pred, y):
-        return self.loss(np.asmatrix(pred), np.asmatrix(y))
+    def evaluate(self, pred, y, X):
+        return self.loss(np.asmatrix(pred), np.asmatrix(y), np.asmatrix(X))
 
-    def gradient(self, pred, y):
+    def gradient(self, pred, y, X):
         # print("Shape", (pred-y).shape)
-        return self.derivative(np.asmatrix(pred), np.asmatrix(y))
+        return self.derivative(np.asmatrix(pred), np.asmatrix(y), np.asmatrix(X))
 
 
 class MeanSquaredError(Loss):
     def __init__(self):
-        loss = lambda p, y: (1 / (2 * y.shape[0])) * ((p - y).transpose() @ (p - y)).diagonal()
-        derivative = lambda p, y: (1 / y.shape[0]) * (np.ones((1, y.shape[0])) @ (p - y)).transpose()
+        loss = lambda p, y, x : (1/(2*y.shape[0])) * ((p-y).transpose() @ (p-y)).diagonal()
+        derivative = lambda p, y, x : (1/y.shape[0]) * (x.transpose() @ (p-y)).sum(0)
         super().__init__(loss=loss, derivative=derivative)
 
 
 class MeanAbsoluteError(Loss):
     def __init__(self):
-        loss = lambda p, y : (1/len(y)) * np.ones((1, y.shape[0])) @ np.abs(p-y)
-        derivative = lambda p, y : (1/len(y)) * ((p-y).transpose() @ (1/np.abs(p-y))).diagonal()
+        loss = lambda p, y, x : (1/len(y)) * np.abs(p-y).sum(0)
+        derivative = lambda p, y, x : (1/y.shape[0]) * (x.transpose() @ (np.multiply(p-y, (1/np.abs(p-y))))).sum(0)
         super().__init__(loss=loss, derivative=derivative)
