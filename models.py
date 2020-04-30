@@ -22,7 +22,7 @@ class Sequential:
         if loss is None:
             loss = Loss()
 
-        sigma = loss.gradient(pred, y, X)
+        sigma = loss.gradient(pred, y)
 
         for layer in self.layers[::-1]:
             sigma = layer.backprop(sigma)
@@ -38,7 +38,7 @@ class Sequential:
 
                 self.layers[level].update()
 
-        return loss.evaluate(self.predict(X), y, X)
+        return loss.evaluate(self.predict(X), y)
 
     def fit(self, X, y, batch_size=32, epochs=1, steps_per_epoch=None, shuffle=True, halt=True, loss=None):
         if batch_size > X.shape[0]:
