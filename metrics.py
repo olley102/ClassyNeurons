@@ -9,36 +9,35 @@ class Loss:
             else:
                 # Symmetric derivative
                 if centering == 0:
-                    self.derivative = lambda p, y, x : (loss(p+0.5*dp, y, x) - loss(p-0.5*dp, y, x)) / dp
+                    self.derivative = lambda p, y : (loss(p+0.5*dp, y) - loss(p-0.5*dp, y)) / dp
                 # Right derivative
                 elif centering == 1:
-                    self.derivative = lambda p, y, x : (loss(p+dp, y, x) - loss(p, y, x)) / dp
+                    self.derivative = lambda p, y : (loss(p+dp, y) - loss(p, y)) / dp
                 # Left derivative
                 elif centering == -1:
-                    self.derivative = lambda p, y, x : (loss(p, y, x) - loss(p-dp, y, x)) / dp
+                    self.derivative = lambda p, y : (loss(p, y) - loss(p-dp, y)) / dp
                 else:
                     raise ValueError("Centering value is invalid. Must be integer of 0, 1 or -1.")
         else:
-            self.loss = lambda p, y, x : (1/(2*y.shape[0])) * ((p-y).transpose() @ (p-y)).diagonal()
-            self.derivative = lambda p, y, x : (1/y.shape[0]) * (x.transpose() @ (p-y)).sum(0)
+            self.loss = lambda p, y : (1/2) * ((p-y).transpose() @ (p-y)).diagonal()
+            self.derivative = lambda p, y : p - y
 
-    def evaluate(self, pred, y, X):
-        return self.loss(np.asmatrix(pred), np.asmatrix(y), np.asmatrix(X))
+    def evaluate(self, pred, y):
+        return self.loss(np.asmatrix(pred), np.asmatrix(y))
 
-    def gradient(self, pred, y, X):
-        # print("Shape", (pred-y).shape)
-        return self.derivative(np.asmatrix(pred), np.asmatrix(y), np.asmatrix(X))
+    def gradient(self, pred, y):
+        return self.derivative(np.asmatrix(pred), np.asmatrix(y))
 
 
 class MeanSquaredError(Loss):
     def __init__(self):
-        loss = lambda p, y, x : (1/(2*y.shape[0])) * ((p-y).transpose() @ (p-y)).diagonal()
-        derivative = lambda p, y, x : (1/y.shape[0]) * (x.transpose() @ (p-y)).sum(0)
+        loss = lambda p, y : (1/2) * ((p-y).transpose() @ (p-y)).diagonal()
+        derivative = lambda p, y : (p-y).sum(0)
         super().__init__(loss=loss, derivative=derivative)
 
 
 class MeanAbsoluteError(Loss):
     def __init__(self):
-        loss = lambda p, y, x : (1/len(y)) * np.abs(p-y).sum(0)
-        derivative = lambda p, y, x : (1/y.shape[0]) * (x.transpose() @ (np.multiply(p-y, (1/np.abs(p-y))))).sum(0)
+        loss = lambda p, y : np.abs(p-y).sum(0)
+        derivative = lambda p, y : np.multiply(p-y, 1/np.abs(p-y)).sum(0)
         super().__init__(loss=loss, derivative=derivative)
