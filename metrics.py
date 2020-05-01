@@ -31,13 +31,13 @@ class Loss:
 
 class MeanSquaredError(Loss):
     def __init__(self):
-        loss = lambda p, y : (1/2) * ((p-y).transpose() @ (p-y)).diagonal()
-        derivative = lambda p, y : (p-y).sum(0)
+        loss = lambda p, y : (1/(2*y.shape[0])) * ((p-y).transpose() @ (p-y)).diagonal()
+        derivative = lambda p, y : (1/(y.shape[0])) * (p-y).sum(0)
         super().__init__(loss=loss, derivative=derivative)
 
 
 class MeanAbsoluteError(Loss):
     def __init__(self):
-        loss = lambda p, y : np.abs(p-y).sum(0)
-        derivative = lambda p, y : np.multiply(p-y, 1/np.abs(p-y)).sum(0)
+        loss = lambda p, y : (1/(y.shape[0])) * np.abs(p-y).sum(0)
+        derivative = lambda p, y : (1/(y.shape[0])) * np.multiply(p-y, 1/np.abs(p-y)).sum(0)
         super().__init__(loss=loss, derivative=derivative)
