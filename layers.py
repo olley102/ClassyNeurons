@@ -39,7 +39,7 @@ class Dense:
         return self.delta
 
     def update(self):
-        self.weights = self.weights - self.X.shape[0] * self.alpha * self.delta
+        self.weights = self.weights - self.alpha * self.delta
 
 
 class Activation:
