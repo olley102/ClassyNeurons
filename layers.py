@@ -1,16 +1,44 @@
 import numpy as np
+from abc import ABCMeta
+from abc import abstractmethod
 
-class Dense:
-    def __init__(self, output_dim:int, input_dim:int, kernel_initializer=None, bias_initializer=None, alpha=1.0):
+
+class Neural(metaclass=ABCMeta):
+    def __init__(self, output_dim, input_dim):
+        self.X = np.matrix([])
+        self.Z = np.matrix([])
         self.input_dim = input_dim
         self.output_dim = output_dim
-        self.weights = np.zeros((input_dim+1, output_dim))
+        self.error_signal = np.matrix([])
+        self.delta = np.matrix([])
+
+    @abstractmethod
+    def initialize(self):
+        pass
+    
+    @abstractmethod
+    def predict(self, X):
+        pass
+    
+    @abstractmethod
+    def backprop(self, error_signal):
+        pass
+
+    @abstractmethod
+    def gradient(self, error_signal):
+        pass
+
+    @abstractmethod
+    def update(self):
+        pass
+
+
+class Dense(Neural):
+    def __init__(self, output_dim:int, input_dim:int, kernel_initializer=None, bias_initializer=None, alpha=1.0):
+        super().__init__(output_dim, input_dim)
+        self.weights = np.asmatrix(np.zeros((input_dim+1, output_dim)))
         self.initialize(kernel_initializer, bias_initializer)
         self.alpha = alpha
-        self.X = np.array([])
-        self.Z = np.array([])
-        self.sigma = np.array([])
-        self.delta = np.array([])
 
     def initialize(self, kernel_initializer=None, bias_initializer=None):
         if kernel_initializer is not None:
@@ -29,57 +57,63 @@ class Dense:
         self.Z = self.X @ self.weights
         return self.Z
 
-    def backprop(self, sigma):
-        self.sigma = np.asmatrix(sigma) @ self.weights.transpose()
-        self.sigma = self.sigma[:, 1:]
-        return self.sigma
+    def backprop(self, error_signal):
+        self.error_signal = np.asmatrix(error_signal) @ self.weights.transpose()
+        self.error_signal = self.error_signal[:, 1:]
+        return self.error_signal
 
-    def weight_gradient(self, sigma):
-        self.delta = self.X.transpose() @ sigma
+    def gradient(self, error_signal):
+        self.delta = self.X.transpose() @ error_signal
         return self.delta
 
     def update(self):
         self.weights = self.weights - self.alpha * self.delta
 
 
-class Activation:
-    def __init__(self, activate=None, derivative=None):
-        self.X = np.array([])
-        self.Z = np.array([])
-        self.sigma = np.array([])
+class Activation(metaclass=ABCMeta):
+    def __init__(self):
+        self.X = np.matrix([])
+        self.Z = np.matrix([])
+        self.error_signal = np.matrix([])
 
-        if activate is None:
-            self.activate = lambda x : x
-        else:
-            self.activate = activate
+    @abstractmethod
+    def activate(self, x):
+        pass
 
-        if derivative is None:
-            self.derivative = lambda x : 1
-        else:
-            self.derivative = derivative
+    @abstractmethod
+    def derivative(self, x):
+        pass
 
     def predict(self, X):
         self.X = np.asmatrix(X)
         self.Z = self.activate(X)
         return self.Z
 
-    def compute_gradient(self):
-        self.sigma = self.derivative(self.X)
-        return self.sigma
+    def gradient(self):
+        self.error_signal = self.derivative(self.X)
+        return self.error_signal
 
-    def backprop(self, sigma):
-        return np.multiply(sigma, self.compute_gradient())
+    def backprop(self, error_signal):
+        return np.multiply(error_signal, self.gradient())
 
 
 class Sigmoid(Activation):
     def __init__(self):
-        activate = lambda x : 1.0 / (1.0 + np.exp(-x))
-        derivative = lambda x : np.multiply(activate(x), (1.0-activate(x)))
-        super().__init__(activate=activate, derivative=derivative)
+        super().__init__()
+
+    def activate(self, x):
+        return 1.0 / (1.0 + np.exp(-x))
+
+    def derivative(self, x):
+        return np.multiply(self.activate(x), (1.0 - self.activate(x)))
 
 
 class ReLU(Activation):
     def __init__(self):
-        activate = lambda x : x * (x > 0)
-        derivative = lambda x : (x > 0) * 1
-        super().__init__(activate=activate, derivative=derivative)
+        super().__init__()
+
+    def activate(self, x):
+        return x * (x > 0)
+
+    def derivative(self, x):
+        return (x > 0) * 1
