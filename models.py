@@ -1,5 +1,6 @@
 import numpy as np
-from metrics import Loss
+from metrics import CustomLoss
+from layers import Neural
 
 class Sequential:
     def __init__(self):
@@ -20,27 +21,27 @@ class Sequential:
         pred = self.predict(X)
 
         if loss is None:
-            loss = Loss()
+            loss = CustomLoss()
 
-        sigma = loss.gradient(pred, y)
+        error_signal = loss.gradient(pred, y)
 
         for layer in self.layers[::-1]:
-            sigma = layer.backprop(sigma)
+            error_signal = layer.backprop(error_signal)
 
         for level in range(len(self.layers)):
-            if self.layers[level].__class__.__name__ == 'Dense':
+            if isinstance(self.layers[level], Neural):
                 for next_layer in self.layers[level+1:]:
-                    if next_layer.__class__.__name__ == 'Dense':
-                        delta = self.layers[level].weight_gradient(next_layer.sigma)
+                    if isinstance(next_layer, Neural):
+                        delta = self.layers[level].gradient(next_layer.error_signal)
                         break
                 else:
-                    delta = self.layers[level].weight_gradient(pred-y)
+                    delta = self.layers[level].gradient(pred - y)
 
                 self.layers[level].update()
 
         return loss.evaluate(self.predict(X), y)
 
-    def fit(self, X, y, batch_size=32, epochs=1, steps_per_epoch=None, shuffle=True, halt=True, loss=None):
+    def fit(self, X, y, loss=None, batch_size=32, epochs=1, steps_per_epoch=None, shuffle=True, halt=True):
         if batch_size > X.shape[0]:
             batch_size = 1
 
