@@ -39,8 +39,8 @@ class CustomLoss(Loss):
                 else:
                     raise ValueError("Centering value is invalid. Must be integer of 0, 1 or -1.")
         else:
-            self.custom_loss = MeanSquaredError().loss
-            self.custom_derivative = MeanSquaredError().derivative
+            self.custom_loss = SquaredError().loss
+            self.custom_derivative = SquaredError().derivative
 
     def loss(self, p, y):
         return self.custom_loss(p, y)
@@ -49,17 +49,17 @@ class CustomLoss(Loss):
         return self.custom_derivative(p, y)
 
 
-class MeanSquaredError(Loss):
+class SquaredError(Loss):
     def loss(self, p, y):
-        return (1/(2*y.shape[0])) * ((p-y).transpose() @ (p-y)).diagonal()
+        return 0.5 * np.square(p-y)
 
     def derivative(self, p, y):
-        return (1/(y.shape[0])) * (p-y).sum(0)
+        return p - y
 
 
-class MeanAbsoluteError(Loss):
+class AbsoluteError(Loss):
     def loss(self, p, y):
-        return (1/(y.shape[0])) * np.abs(p-y).sum(0)
+        return np.abs(p-y)
 
     def derivative(self, p, y):
-        return (1/(y.shape[0])) * np.multiply(p-y, 1/np.abs(p-y)).sum(0)
+        return np.multiply(p-y, 1/np.abs(p-y))
