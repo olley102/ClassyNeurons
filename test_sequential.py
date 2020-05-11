@@ -3,7 +3,7 @@ from layers import Dense
 from layers import Sigmoid
 from models import Sequential
 from initializers import saved_weights
-from metrics import MeanSquaredError
+from metrics import SquaredError
 import matplotlib.pyplot as plt
 
 kernel_weights = np.array([[0, 0],
@@ -32,7 +32,7 @@ print(p)
 print("Error")
 print(p-y)
 
-loss_function = MeanSquaredError()
+loss_function = SquaredError()
 
 print("Training")
 loss_history = model.fit(X, y, epochs=100, batch_size=2, steps_per_epoch=1000, halt=False, loss=loss_function)
@@ -49,5 +49,3 @@ plt.plot(np.arange(0, 100), loss_history[:, 1])
 plt.xlabel("Epoch")
 plt.ylabel("Loss")
 plt.show()
-
-# TODO: test with hidden layer
