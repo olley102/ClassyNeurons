@@ -1,6 +1,6 @@
 import numpy as np
 from metrics import CustomLoss
-from layers import Neural
+
 
 class Sequential:
     def __init__(self):
@@ -21,25 +21,16 @@ class Sequential:
         pred = self.predict(X)
 
         if loss is None:
-            loss = CustomLoss()
+            loss = CustomLoss()  # default loss
 
         error_signal = loss.gradient(pred, y)
 
+        # Backprop.
         for layer in self.layers[::-1]:
             error_signal = layer.backprop(error_signal)
+            layer.update()
 
-        for level in range(len(self.layers)):
-            if isinstance(self.layers[level], Neural):
-                for next_layer in self.layers[level+1:]:
-                    if isinstance(next_layer, Neural):
-                        delta = self.layers[level].gradient(next_layer.error_signal)
-                        break
-                else:
-                    delta = self.layers[level].gradient(pred - y)
-
-                self.layers[level].update()
-
-        return loss.evaluate(self.predict(X), y)
+        return np.mean(loss.evaluate(self.predict(X), y), axis=0)
 
     def fit(self, X, y, loss=None, batch_size=32, epochs=1, steps_per_epoch=None, shuffle=True, halt=True):
         if batch_size > X.shape[0]:
