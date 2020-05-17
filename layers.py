@@ -1,9 +1,48 @@
 import numpy as np
 from abc import ABCMeta
 from abc import abstractmethod
+from initializers import saved_weights
 
 
-class Neural(metaclass=ABCMeta):
+class Layer(metaclass=ABCMeta):
+    @abstractmethod
+    def predict(self, X):
+        """
+        Forward propagate.
+
+        :param X: input data.
+        :return: self.Z
+        """
+        pass
+
+    @abstractmethod
+    def backprop(self, error_signal):
+        """
+        Backward propagate.
+
+        :param error_signal: signal from next layer.
+        :return: self.error_signal_in
+        """
+        pass
+
+    @abstractmethod
+    def update(self):
+        """
+        Update weights.
+        """
+        pass
+
+    @abstractmethod
+    def get_save_data(self):
+        """
+        Get data to store in binary file in models.
+
+        :return: list of class, output_dim, input_dim, weights, ...
+        """
+        pass
+
+
+class Neural(Layer, metaclass=ABCMeta):
     """
     Abstract class for layers with standard forward-prop and backprop.
     """
@@ -30,7 +69,7 @@ class Neural(metaclass=ABCMeta):
         self.error_signal_in = np.matrix([])
         self.error_signal_out = np.matrix([])
         self.gradient = np.matrix([])
-    
+
     @abstractmethod
     def predict(self, X):
         """
@@ -40,7 +79,7 @@ class Neural(metaclass=ABCMeta):
         :return: self.Z
         """
         pass
-    
+
     @abstractmethod
     def backprop(self, error_signal):
         """
@@ -55,6 +94,15 @@ class Neural(metaclass=ABCMeta):
     def update(self):
         """
         Update weights.
+        """
+        pass
+
+    @abstractmethod
+    def get_save_data(self):
+        """
+        Get data to store in binary file in models.
+
+        :return: list of class, output_dim, input_dim, weights, ...
         """
         pass
 
@@ -110,7 +158,7 @@ class Dense(Neural):
         Backward propagate.
 
         :param error_signal: signal from next layer.
-        :return: self.error_signal
+        :return: self.error_signal_in
         """
         self.error_signal_out = np.asmatrix(error_signal)
         self.error_signal_in = self.error_signal_out @ self.weights.transpose()
@@ -124,8 +172,24 @@ class Dense(Neural):
         self.gradient = self.X.transpose() @ self.error_signal_out
         self.weights = self.weights - self.alpha * (1/self.X.shape[0]) * self.gradient
 
+    def get_save_data(self):
+        """
+        Get data to store in binary file in models.
 
-class Activation(metaclass=ABCMeta):
+        :return: list of class, output_dim, input_dim, weights, ...
+        """
+        data = {
+            "class": self.__class__,
+            "output_dim": self.output_dim,
+            "input_dim": self.input_dim,
+            "kernel_initializer": saved_weights(self.weights[1:, :]),
+            "bias_initializer": saved_weights(self.weights[0, :])
+        }
+
+        return data
+
+
+class Activation(Layer, metaclass=ABCMeta):
     """
     Abstract class for activation layers.
     """
@@ -170,6 +234,18 @@ class Activation(metaclass=ABCMeta):
         self.error_signal_out = error_signal
         self.error_signal_in = np.multiply(error_signal, self.derivative(self.X))
         return self.error_signal_in
+
+    def get_save_data(self):
+        """
+        Get data to store in binary file in models.
+
+        :return: list of class, output_dim, input_dim, weights, ...
+        """
+        data = {
+            "class": self.__class__
+        }
+
+        return data
 
 
 class Sigmoid(Activation):
