@@ -29,7 +29,7 @@ a = sigmoid.predict(z)
 print("a", a)
 
 error_signal = a - y
-delta = layer.gradient(error_signal)
+delta = layer.backprop(error_signal)
 print("delta", delta)
 
 layer.update()
@@ -41,7 +41,7 @@ a = sigmoid.predict(z)
 print("a", a)
 
 error_signal = a - y
-delta = layer.gradient(error_signal)
+delta = layer.backprop(error_signal)
 print("delta", delta)
 
 print("theta", layer.weights)
